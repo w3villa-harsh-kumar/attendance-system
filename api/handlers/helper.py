@@ -54,3 +54,13 @@ def save_face_and_encodings(name, frame, face_encoding, count):
     field_name = f'encoding_{count}'
     redis_client.hset(encoding_key, field_name, face_encoding.tobytes())
     print(f'Encoding saved in Redis hash with key {encoding_key} and field {field_name}')
+
+
+def serialize_face(face):
+    base_server_url = "http://localhost:8000"
+    return {
+        "id": str(face["_id"]),
+        "username": face.get("username", "N/A"), 
+        "images": face.get("images", []), 
+        # "image_path": f"{base_server_url}/{face.get('image_path', 'default.jpg')}", 
+    }

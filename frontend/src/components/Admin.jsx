@@ -5,18 +5,20 @@ import './Admin.css';
 const Admin = () => {
   const [photos, setPhotos] = useState([]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/photos');
+      const response = await axios.get('http://localhost:8000/get_faces');
       setPhotos(response.data);
+      console.log(response.data)
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleDelete = async (id) => {
     try {
@@ -26,6 +28,8 @@ const Admin = () => {
       console.error('Error deleting photo:', error);
     }
   };
+
+
 
   return (
     <div className="admin-container">
