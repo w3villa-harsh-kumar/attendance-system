@@ -1,0 +1,68 @@
+.home-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+}
+
+.capture-button, .Recognizer-button {
+    padding: 15px 30px;
+    font-size: 18px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin-bottom: 10px; /* Add margin between buttons */
+}
+
+
+.capture-button:hover, .Recognizer-button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.capture-button:active, .Recognizer-button:active {
+    background-color: #004080;
+    transform: scale(1);
+}
+
+.Recognizer-button {
+    display: block;    
+    background-color: #28a745;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.Recognizer-button:hover {
+    background-color: #218838; 
+}
+
+.Recognizer-button:active {
+    background-color: #1e7e34; }
+
+.Admin-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.Admin-button:hover {
+    background-color: #c82333;
+}
+
+.Admin-button:active {
+    background-color: #bd2130;
+}
