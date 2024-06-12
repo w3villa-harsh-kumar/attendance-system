@@ -43,6 +43,28 @@ const Admin = () => {
           </div>
         ))}
       </div>
+
+      <div className="table-container">
+        <h2>User Details</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Sr No</th>
+              <th>ID</th>
+              <th>Username</th>
+            </tr>
+          </thead>
+          <tbody>
+            {photos.map((photo, index) => (
+              <tr key={photo.id}>
+                <td>{index + 1}</td>
+                <td>{photo.id}</td>
+                <td>{photo.username}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

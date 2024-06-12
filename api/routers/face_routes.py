@@ -9,6 +9,7 @@ router = APIRouter()
 
 @router.post("/register")
 async def register_faces_endpoint(data: ImageData):
+    print("Here", data)
     return await register_faces(data)
 
 @router.get("/video_feed")

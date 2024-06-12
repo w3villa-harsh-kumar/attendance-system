@@ -13,6 +13,7 @@ from fastapi import HTTPException
 from api.handlers.helper import get_encodings, save_face_and_encodings
 
 async def process_images(data):
+    print("Data: ", data)
     try:
         mongo_client = connect_to_mongo()
         redis_client = get_redis_connection()
