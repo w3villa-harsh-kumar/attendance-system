@@ -16,7 +16,7 @@ const Capture = () => {
         }
       } catch (err) {
         console.error("Error accessing the webcam: ", err);
-        setStatus("Failed to access webcam.");
+        setStatus("Failed to access webcam.");    
       }
     };
 
