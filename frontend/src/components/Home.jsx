@@ -7,14 +7,20 @@ const Home = () => {
 
     const handleButtonClick1 = () => {
         navigate('/capture');
+        window.location.reload();
+
     };
 
     const handleButtonClick2 = () => {
         navigate('/admin');
+        window.location.reload();
+    
     };
 
     const handleButtonClick3 = () => {
         navigate('/recognizer');
+        window.location.reload();
+    
     };
 
     return (
@@ -31,5 +37,6 @@ const Home = () => {
         </div>
     );
 };
+
 
 export default Home;
