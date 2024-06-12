@@ -33,9 +33,14 @@ const Capture = () => {
   };
 
   const handleCaptureClick = () => {
+    if (!name) {
+      setStatus('Please enter your name before capturing an image.');
+      return;
+    }
     if (images.length < 4) {
       const newImage = captureImage();
       setImages([...images, newImage]);
+      setStatus('');
     }
   };
 
@@ -77,7 +82,7 @@ const Capture = () => {
             onChange={e => setName(e.target.value)}
             placeholder="Enter your name"
           />
-          <button onClick={handleCaptureClick} disabled={images.length >= 4}>
+          <button onClick={handleCaptureClick} disabled={!name || images.length >= 4}>
             Capture Face
           </button>
           <div className="images-container">
