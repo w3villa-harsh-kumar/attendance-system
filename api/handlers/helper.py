@@ -5,7 +5,9 @@ from config.redis import get_redis_connection
 
 def save_image(img_path, img):
     try:
+        print("Here ==============================>")
         cv2.imwrite(img_path, img)
+        print("Saved successfully!")
     except Exception as e:
         raise Exception(f"Error saving image: {str(e)}")
 
@@ -16,7 +18,7 @@ def load_face_encodings(users_collection):
     face_encodings = []
     for user in users:
         for encoding in user['encodings']:
-            face_encodings.append(np.frombuffer(encoding, dtype=np.float64))
+            face_encodings.append(np.frombuffer(encoding, dtype=np.float64)) 
     return face_encodings
   except Exception as e:
         raise Exception(f"Error in finding encodings: {str(e)}")
@@ -24,12 +26,12 @@ def load_face_encodings(users_collection):
 # Utility to get encodings from Redis
 def get_encodings():
     redis_client = get_redis_connection()
-    keys = redis_client.keys('*_encodings')
+    keys = redis_client.keys('*_faces')  # Adjusted to match the key pattern used for storing
     known_face_encodings = []
     known_face_names = []
 
     for key in keys:
-        name = key.decode('utf-8').replace('_encodings', '')
+        name = key.decode('utf-8').replace('_faces', '')  # Adjust to strip the correct suffix
         stored_encodings = redis_client.hgetall(key)
 
         for field_name, encoding_bytes in stored_encodings.items():
@@ -37,12 +39,13 @@ def get_encodings():
             known_face_encodings.append(encoding)
             known_face_names.append(name)
 
+    redis_client.close()  # Close the connection after use
     return known_face_encodings, known_face_names
   
 # Save faces and encodings in Redis
 def save_face_and_encodings(name, frame, face_encoding, count):
     redis_client = get_redis_connection()
-    user_folder = f'saved_faces/{name}'
+    user_folder = f'unknown_faces/{name}'
     if not os.path.exists(user_folder):
         os.makedirs(user_folder)
 
@@ -50,7 +53,7 @@ def save_face_and_encodings(name, frame, face_encoding, count):
     cv2.imwrite(image_path, frame)
     print(f'Image saved as {image_path}')
 
-    encoding_key = f'{name}_encodings'
+    encoding_key = f'{name}_faces'
     field_name = f'encoding_{count}'
     redis_client.hset(encoding_key, field_name, face_encoding.tobytes())
     print(f'Encoding saved in Redis hash with key {encoding_key} and field {field_name}')

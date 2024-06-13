@@ -26,7 +26,7 @@ class ImageData(BaseModel):
 @app.post("/register")
 async def register_faces(data: ImageData):
     try:
-        user_folder = f'saved_faces/{data.username}'
+        user_folder = f'knownfaces/{data.username}'
         if not os.path.exists(user_folder):
             os.makedirs(user_folder)
 

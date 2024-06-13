@@ -20,11 +20,12 @@ async def process_images(data):
         db = mongo_client['face_recognition']
         users_collection = db['users']
 
-        base_folder = os.path.join('saved_faces')
+        base_folder = os.path.join('known_faces')
         user_folder = os.path.join(base_folder, data.username)
         if not os.path.exists(user_folder):
             os.makedirs(user_folder)
-
+        replaced_username = data.username.replace(" ", "_")
+        redis_hash_key = f"{replaced_username.lower()}_faces" 
         face_encodings_list = []  # To store face encodings
         for index, base64_image in enumerate(data.images):
             try:
@@ -43,11 +44,16 @@ async def process_images(data):
                 face_encodings_list.extend(face_encodings)  # Collecting encodings
 
                 # Save the image
-                img_path = os.path.join(user_folder, f"{data.username}_{index}.png")
+                img_path = os.path.join(user_folder, f"{replaced_username.lower()}_{index}.png")
                 save_image(img_path, img)
 
-                # Save encoding to Redis
-                redis_client.set(f"{data.username}_face_{index}", face_encodings[0].tobytes())
+                # Save encoding to Redis 
+                try:
+                    print("I'm here")
+                    redis_client.hset(redis_hash_key, f"face_{index}", face_encodings[0].tobytes())
+                    print("Redis Done: ", redis_hash_key)
+                except Exception as e:
+                    print("Error in redis")
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Error processing image {index}: {str(e)}")
 
@@ -67,7 +73,7 @@ async def process_images(data):
         raise HTTPException(status_code=500, detail=f"Error processing images: {str(e)}")
 
 def generate_frames():
-    video_capture = cv2.VideoCapture(2)
+    video_capture = cv2.VideoCapture('rtsp://admin:admin_123@192.168.29.103:554/Streaming/channels/601')
     unknown_face_encodings = []
     unknown_face_names = []
     try:
