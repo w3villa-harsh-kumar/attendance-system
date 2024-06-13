@@ -67,7 +67,7 @@ async def process_images(data):
         raise HTTPException(status_code=500, detail=f"Error processing images: {str(e)}")
 
 def generate_frames():
-    video_capture = cv2.VideoCapture(0)
+    video_capture = cv2.VideoCapture(2)
     unknown_face_encodings = []
     unknown_face_names = []
     try:
