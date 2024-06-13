@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             imagesDiv.classList.add('images-container');
             user.images.forEach(image => {
                 const img = document.createElement('img');
-                img.src = `/knownfaces/${username}/${image}`;
+                img.src = `/known_faces/${username}/${image}`;
                 imagesDiv.appendChild(img);
             });
             userDiv.appendChild(imagesDiv);
