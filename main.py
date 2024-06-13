@@ -26,3 +26,4 @@ def startup_db_client():
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Face Recognition API"}
+

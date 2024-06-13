@@ -1,5 +1,6 @@
+from typing import List
 from pydantic import BaseModel
 
 class ImageData(BaseModel):
-    images: list[str]
+    images: List[str]
     username: str
