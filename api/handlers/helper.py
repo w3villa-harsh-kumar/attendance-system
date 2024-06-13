@@ -42,7 +42,7 @@ def get_encodings():
 # Save faces and encodings in Redis
 def save_face_and_encodings(name, frame, face_encoding, count):
     redis_client = get_redis_connection()
-    user_folder = f'saved_faces/{name}'
+    user_folder = f'knownfaces/{name}'
     if not os.path.exists(user_folder):
         os.makedirs(user_folder)
 

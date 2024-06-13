@@ -20,7 +20,7 @@ async def process_images(data):
         db = mongo_client['face_recognition']
         users_collection = db['users']
 
-        base_folder = os.path.join('saved_faces')
+        base_folder = os.path.join('knownfaces')
         user_folder = os.path.join(base_folder, data.username)
         if not os.path.exists(user_folder):
             os.makedirs(user_folder)
@@ -67,7 +67,7 @@ async def process_images(data):
         raise HTTPException(status_code=500, detail=f"Error processing images: {str(e)}")
 
 def generate_frames():
-    video_capture = cv2.VideoCapture(2)
+    video_capture = cv2.VideoCapture(0)
     unknown_face_encodings = []
     unknown_face_names = []
     try:

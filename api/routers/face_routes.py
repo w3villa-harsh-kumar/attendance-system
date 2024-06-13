@@ -17,3 +17,5 @@ async def video_feed():
 @router.get('/get_faces')
 async def get_faces():
     return await known_faces()
+
+
