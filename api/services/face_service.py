@@ -73,7 +73,7 @@ async def process_images(data):
         raise HTTPException(status_code=500, detail=f"Error processing images: {str(e)}")
 
 def generate_frames():
-    video_capture = cv2.VideoCapture('rtsp://admin:admin_123@192.168.29.103:554/Streaming/channels/601')
+    video_capture = cv2.VideoCapture(0)
     unknown_face_encodings = []
     unknown_face_names = []
     try:
