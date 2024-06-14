@@ -10,7 +10,7 @@ from config.db import connect_to_mongo
 from config.redis import get_redis_connection
 from api.handlers.response import format_response
 from fastapi import HTTPException
-from api.handlers.helper import get_encodings, save_face_and_encodings
+from api.handlers.helper import get_encodings, load_known_faces, load_unknown_faces
 
 async def process_images(data):
     try:
@@ -44,7 +44,7 @@ async def process_images(data):
                 face_encodings_list.extend(face_encodings)  # Collecting encodings
 
                 # Save the image
-                img_path = os.path.join(user_folder, f"{replaced_username.lower()}_{index}.png")
+                img_path = os.path.join(user_folder, f"{replaced_username.lower()}_{index}.jpg")
                 save_image(img_path, img)
 
                 # Save encoding to Redis 
@@ -61,7 +61,7 @@ async def process_images(data):
         try:
             user_data = {
                 "username": data.username,
-                "images": [f"{data.username}_{i}.png" for i in range(len(data.images))],
+                "images": [f"{data.username}_{i}.jpg" for i in range(len(data.images))],
                 "encodings": [face.tobytes() for face in face_encodings_list]
             }
             users_collection.insert_one(user_data)
@@ -71,11 +71,92 @@ async def process_images(data):
         return format_response(len(data.images))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing images: {str(e)}")
+    
+known_face_encodings, known_face_names = load_known_faces()
+unknown_face_encodings, unknown_ids = load_unknown_faces()
+print("unknown_face_name, ", unknown_ids)
+unknown_face_counter = 0
+
+
+# Dictionary to track the last seen faces and their last detected time
+faces_in_previous_frame = {}
+
+def is_new_unknown_face(face_encoding):
+    if not unknown_face_encodings:
+        return True
+    # Calculate distances from new face encoding to all stored unknown face encodings
+    distances = face_recognition.face_distance(unknown_face_encodings, face_encoding)
+    # Consider face new if no stored encoding is close enough
+    if all(dist > 0.6 for dist in distances):  # Threshold might need adjustment
+        return True
+    return False
+
+
+def update_faces_in_frame(face_infos):
+    from datetime import datetime, timedelta
+    mongo_client = connect_to_mongo()
+    db = mongo_client["attendance"]
+    known_faces_collection = db["known_faces"]
+    unknown_faces_collection = db["unknown_faces"]
+    global faces_in_previous_frame, unknown_face_counter
+    now = datetime.now()
+    current_seen = set(info['name'] for info in face_infos)
+
+    new_faces = current_seen - set(faces_in_previous_frame.keys())
+    print("new_faces: ", new_faces)
+
+    for info in face_infos:
+        name, encoding, frame, top, right, bottom, left = info.values()
+        if name == "Unknown":
+            if is_new_unknown_face(encoding):
+                unknown_face_encodings.append(encoding)
+                unknown_face_counter += 1
+                identifier = f'unknown_{unknown_face_counter}'
+                unknown_ids.append(identifier)
+                image_path = os.path.join('unknown_faces', f'{identifier}.jpg')
+                if top < 0: top = 0
+                if right > frame.shape[1]: right = frame.shape[1]
+                if bottom > frame.shape[0]: bottom = frame.shape[0]
+                if left < 0: left = 0
+                face_image = frame[top:bottom, left:right]
+                cv2.imwrite(image_path, face_image)
+                unknown_faces_collection.insert_one({"identifier": identifier, "timestamp": now, "event_type": "new detection"})
+                faces_in_previous_frame[identifier] = {'last_seen': now, 'identifier': identifier}
+            else:
+                faces_in_previous_frame[name]['last_seen'] = now
+        elif name not in faces_in_previous_frame:
+            faces_in_previous_frame[name] = {'last_seen': now}
+        else:
+            faces_in_previous_frame[name]['last_seen'] = now
+            faces_in_previous_frame[name]['new'] = False
+    
+    print("list(faces_in_previous_frame.keys(): ", list(faces_in_previous_frame.keys()))
+    for face in list(faces_in_previous_frame.keys()):
+        print("face: ", face)
+        print("now - faces_in_previous_frame[face]['last_seen']", now - faces_in_previous_frame[face]['last_seen'])
+        print("timedelta(seconds=30): ", timedelta(seconds=30))
+        print("face not in current_seen: ", face not in current_seen)
+        print("(now - faces_in_previous_frame[face]['last_seen'] > timedelta(seconds=30)):", (now - faces_in_previous_frame[face]['last_seen'] > timedelta(seconds=30)))
+        if (now - faces_in_previous_frame[face]['last_seen'] > timedelta(seconds=30)) and face not in current_seen:
+            del faces_in_previous_frame[face]
+            
+    for face in list(new_faces):
+        print("Face =================================> ", face)
+        print('''"unknown" in face.lower() and face != "Unknown":''', "unknown" in face.lower() and face != "Unknown")
+        if face != "Unknown":
+            if "unknown" in face.lower():
+                image_path = os.path.join('unknown_faces', f'{face}.jpg')
+                cv2.imwrite(image_path, frame)  # Save the image of the unknown face
+                unknown_faces_collection.insert_one({"identifier": f'{face}', "timestamp": now, "event_type": "new detection"})
+            else:
+                known_faces_collection.insert_one({"name": face, "timestamp": now, "event_type": "new detection"})
+
 
 def generate_frames():
-    video_capture = cv2.VideoCapture('rtsp://admin:admin_123@192.168.29.103:554/Streaming/channels/601')
-    unknown_face_encodings = []
-    unknown_face_names = []
+    video_capture = cv2.VideoCapture(0)
+    # unknown_face_encodings = []
+    # unknown_face_names = []
+    tolerance=.5
     try:
         while True:
             ret, frame = video_capture.read()
@@ -85,33 +166,29 @@ def generate_frames():
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             face_locations = face_recognition.face_locations(rgb_frame)
             face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
-            known_face_encodings, known_face_names = get_encodings()
+            # known_face_encodings, known_face_names = get_encodings()
+            face_infos = []
             face_names = []
 
-            for face_encoding in face_encodings:
-                matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=.5) if known_face_encodings else []
-                name = "Unknown"
-
-                if True in matches:
-                    best_match_index = np.argmin(face_recognition.face_distance(known_face_encodings, face_encoding))
-                    name = known_face_names[best_match_index]
+            for (top, right, bottom, left), encoding in zip(face_locations, face_encodings):
+                matches = face_recognition.compare_faces(known_face_encodings, encoding, tolerance=tolerance)
+                unKnown_face_matches = face_recognition.compare_faces(unknown_face_encodings, encoding, tolerance=tolerance)
+                # name = "Unknown" if not any(matches) and not any(unKnown_face_matches) else known_face_names[matches.index(True)]
+                if any(matches):
+                    first_match_index = matches.index(True)
+                    name = known_face_names[first_match_index]
+                elif any(unKnown_face_matches):
+                    first_match_index = unKnown_face_matches.index(True)
+                    name = unknown_ids[first_match_index]
                 else:
-                    # Check against unknown faces
-                    unknown_matches = face_recognition.compare_faces(unknown_face_encodings, face_encoding, tolerance=.5)
-                    if True in unknown_matches:
-                        best_match_index = np.argmin(face_recognition.face_distance(unknown_face_encodings, face_encoding))
-                        if face_recognition.face_distance(unknown_face_encodings, face_encoding)[best_match_index] < 0.5:
-                            continue
-                        name = unknown_face_names[best_match_index]
-                    else:
-                        # Assign a new unknown identifier
-                        unknown_id = len(unknown_face_encodings) + 1
-                        unknown_face_encodings.append(face_encoding)
-                        unknown_face_names.append(f'Unknown_{unknown_id}')
-                        name = f'Unknown_{unknown_id}'
-                        save_face_and_encodings(name, frame, face_encoding, len([n for n in unknown_face_names if n == name]))
-
+                    name = "Unknown"
                 face_names.append(name)
+                face_infos.append({
+                    'name': name, 'encoding': encoding, 'frame': frame, 
+                    'top': top*4, 'right': right*4, 'bottom': bottom*4, 'left': left*4
+                })
+
+            update_faces_in_frame(face_infos)
 
             for (top, right, bottom, left), name in zip(face_locations, face_names):
                 cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)

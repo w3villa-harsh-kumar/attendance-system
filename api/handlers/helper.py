@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 from config.redis import get_redis_connection
+import face_recognition
 
 def save_image(img_path, img):
     try:
@@ -67,3 +68,45 @@ def serialize_face(face):
         "images": face.get("images", []), 
         # "image_path": f"{base_server_url}/{face.get('image_path', 'default.jpg')}", 
     }
+    
+# Load known faces
+def load_known_faces(base_directory="known_faces"):
+    known_faces = []
+    known_names = []
+    # Walk through the directory tree
+    for root, dirs, files in os.walk(base_directory):
+        for file in files:
+            if file.endswith(".jpg"):  # Assumes all images are JPEGs
+                path = os.path.join(root, file)
+                image = face_recognition.load_image_file(path)
+                face_encodings = face_recognition.face_encodings(image)
+                if face_encodings:
+                    encoding = face_encodings[0]
+                    known_faces.append(encoding)
+                    # Assuming the subfolder's name is the person's name
+                    known_names.append(os.path.basename(root))
+    return known_faces, known_names
+
+def load_unknown_faces(base_directory="unknown_faces"):
+    unknown_faces = []
+    unknown_identifiers = []
+
+    # Ensure the directory exists
+    if not os.path.exists(base_directory):
+        print("Directory not found:", base_directory)
+        return unknown_faces, unknown_identifiers
+
+    # Walk through the directory tree
+    for root, dirs, files in os.walk(base_directory):
+        for file in files:
+            if file.lower().endswith(".jpg"):  # Assumes all images are JPEGs
+                path = os.path.join(root, file)
+                image = face_recognition.load_image_file(path)
+                face_encodings = face_recognition.face_encodings(image)
+                if face_encodings:
+                    # Typically, there should be one face per image in this scenario
+                    encoding = face_encodings[0]
+                    unknown_faces.append(encoding)
+                    unknown_identifiers.append(os.path.splitext(file)[0])  # Save the identifier without the file extension
+
+    return unknown_faces, unknown_identifiers
