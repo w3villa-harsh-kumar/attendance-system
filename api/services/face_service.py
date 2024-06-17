@@ -10,7 +10,7 @@ from config.db import connect_to_mongo
 from config.redis import get_redis_connection
 from api.handlers.response import format_response
 from fastapi import HTTPException
-from api.handlers.helper import get_encodings, load_known_faces, load_unknown_faces
+from api.handlers.helper import load_known_faces, load_unknown_faces
 
 async def process_images(data):
     try:
@@ -108,6 +108,7 @@ def update_faces_in_frame(face_infos):
     for info in face_infos:
         name, encoding, frame, top, right, bottom, left = info.values()
         if name == "Unknown":
+            print(is_new_unknown_face(encoding))
             if is_new_unknown_face(encoding):
                 unknown_face_encodings.append(encoding)
                 unknown_face_counter += 1
@@ -119,11 +120,10 @@ def update_faces_in_frame(face_infos):
                 if bottom > frame.shape[0]: bottom = frame.shape[0]
                 if left < 0: left = 0
                 face_image = frame[top:bottom, left:right]
-                cv2.imwrite(image_path, face_image)
-                unknown_faces_collection.insert_one({"identifier": identifier, "timestamp": now, "event_type": "new detection"})
-                faces_in_previous_frame[identifier] = {'last_seen': now, 'identifier': identifier}
-            else:
-                faces_in_previous_frame[name]['last_seen'] = now
+                if face_image.size > 0: 
+                    cv2.imwrite(image_path, face_image)
+                    unknown_faces_collection.insert_one({"identifier": identifier, "timestamp": now, "event_type": "new detection"})
+                    faces_in_previous_frame[identifier] = {'last_seen': now, 'identifier': identifier}
         elif name not in faces_in_previous_frame:
             faces_in_previous_frame[name] = {'last_seen': now}
         else:
