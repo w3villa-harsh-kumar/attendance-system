@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Office Tracking System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .bg-custom {
+      background-color: #4B2E83;
+      /* Adjust the color to fit your branding */
+    }
+
+    .card-header-custom {
+      background-color: #646FD4;
+      color: #FFFFFF;
+    }
+
+    .logout-button {
+      text-decoration: none;
+      color: #fff;
+      background-color: #dc3545;
+      padding: 10px 20px;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .logout-button:hover {
+      background-color: #c82333;
+    }
+
+    .full-width {
+      width: 100%;
+    }
+
+    .table-responsive {
+      margin: 20px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-custom">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white" href="#">Office Tracking System</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active">
+            <a class="nav-link text-white" href="/dashboard">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white" href="/occurrences">Occurrences Log</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white" href="/user-management">User Management</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white" href="/face-registration">Face Registration</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white" href="/system-settings">System Settings</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white" href="/reports">Reports</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white" href="/notifications">Notifications</a>
+          </li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link logout-button" href="/logout">Logout</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h2>Welcome to the Office Tracking System Dashboard</h2>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+          <div class="card-header">Recent Occurrences</div>
+          <div class="card-body">
+            <h5 class="card-title">Last Entry: John Doe</h5>
+            <p class="card-text">Last logged entry at 9:00 AM today.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+          <div class="card-header">System Alerts</div>
+          <div class="card-body">
+            <h5 class="card-title">No critical alerts</h5>
+            <p class="card-text">System is running smoothly with no reported issues.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-white bg-warning mb-3">
+          <div class="card-header">User Statistics</div>
+          <div class="card-body">
+            <h5 class="card-title">Total Users: 42</h5>
+            <p class="card-text">42 active users currently registered in the system.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-5 table-responsive">
+      <h3>Today's Attendance</h3>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Time In</th>
+            <th scope="col">Time Out</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for attendance in attendances %}
+          <tr>
+            <th scope="row">{{ loop.index }}</th>
+            <td>{{ attendance.name }}</td>
+            <td>{{ attendance.time_in }}</td>
+            <td>{{ attendance.time_out }}</td>
+            <td>{{ attendance.status }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
